@@ -551,10 +551,10 @@ class FFXIVBenchmarkLauncher(QApplication):
     self.text_wine_prefix_path.setText(path)
 
   def launch_benchmark(self):
-    self.launch(self.build_cmdline())
+    self.launch(self.build_cmdline(False))
 
   def launch_character_creation(self):
-    cmdline = self.build_cmdline()
+    cmdline = self.build_cmdline(True)
     cmdline.append("Bench.CharacterCreation=1")
     self.launch(cmdline)
 
@@ -597,7 +597,7 @@ class FFXIVBenchmarkLauncher(QApplication):
     if ret.returncode != 0:
       self.show_error(QMessageBox.Warning, "Command execution failed with return code " + str(ret.returncode) + ".")
 
-  def build_cmdline(self):
+  def build_cmdline(self, vsync):
     texture_filter_type = 2
     texture_filter_anisotropy = 2
 
@@ -607,7 +607,7 @@ class FFXIVBenchmarkLauncher(QApplication):
       texture_filter_anisotropy = 2 - self.cb_texture_filter.currentIndex()
 
     cmd_args = [
-      "SYS.Language=1", "SYS.Fps=0",
+      "SYS.Language=1", "SYS.Fps=" + str(int(vsync)),
       "SYS.ScreenMode=" + str(self.cb_fullscreen_mode.currentIndex()),
       "SYS.ScreenWidth=" + self.text_res_x.text(),
       "SYS.ScreenHeight=" + self.text_res_y.text(),
