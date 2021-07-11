@@ -69,6 +69,7 @@ class FFXIVBenchmarkConfig:
       "tessellation"          : "0",
       "glare"                 : "0",
       "wet_surface"           : "True",
+      "water_refraction"      : "0",
       "movement_self"         : "0",
       "movement_other"        : "0" }
 
@@ -290,6 +291,11 @@ class FFXIVBenchmarkLauncher(QApplication):
     self.cb_glare_effect.addItem("Low")
     self.cb_glare_effect.addItem("Off")
 
+    self.cb_water_refraction = QComboBox()
+    self.cb_water_refraction.addItem("Normal")
+    self.cb_water_refraction.addItem("Low")
+    self.cb_water_refraction.addItem("Off")
+
     layout_grid_graphics_effects = QGridLayout()
     layout_grid_graphics_effects.addWidget(self.chk_wet_surface, 0, 0)
     layout_grid_graphics_effects.addWidget(self.chk_vignette, 0, 1)
@@ -299,6 +305,8 @@ class FFXIVBenchmarkLauncher(QApplication):
     layout_grid_graphics_effects.addWidget(self.cb_ambient_occlusion, 2, 1)
     layout_grid_graphics_effects.addWidget(QLabel("Glare:"), 3, 0)
     layout_grid_graphics_effects.addWidget(self.cb_glare_effect, 3, 1)
+    layout_grid_graphics_effects.addWidget(QLabel("Water refraction:"), 4, 0)
+    layout_grid_graphics_effects.addWidget(self.cb_water_refraction, 4, 1)
 
     group_graphics_effects = QGroupBox("Effects")
     group_graphics_effects.setLayout(layout_grid_graphics_effects)
@@ -422,6 +430,7 @@ class FFXIVBenchmarkLauncher(QApplication):
     self.chk_depth_of_field.setChecked(cfg.getboolean("graphics", "depth_of_field"))
     self.cb_ambient_occlusion.setCurrentIndex(cfg.getint("graphics", "ssao"))
     self.cb_glare_effect.setCurrentIndex(cfg.getint("graphics", "glare_effect"))
+    self.cb_water_refraction.setCurrentIndex(cfg.getint("graphics", "water_refraction"))
 
     movement_self_button = self.grp_movement_self.button(cfg.getint("graphics", "movement_self"))
     movement_npc_button = self.grp_movement_npc.button(cfg.getint("graphics", "movement_other"))
@@ -462,6 +471,7 @@ class FFXIVBenchmarkLauncher(QApplication):
     cfg.set("graphics", "depth_of_field", str(self.chk_depth_of_field.isChecked()))
     cfg.set("graphics", "ssao", str(self.cb_ambient_occlusion.currentIndex()))
     cfg.set("graphics", "glare_effect", str(self.cb_glare_effect.currentIndex()))
+    cfg.set("graphics", "water_refraction", str(self.cb_water_refraction.currentIndex()))
     cfg.set("graphics", "movement_self", str(self.grp_movement_self.checkedId()))
     cfg.set("graphics", "movement_other", str(self.grp_movement_npc.checkedId()))
 
@@ -480,6 +490,7 @@ class FFXIVBenchmarkLauncher(QApplication):
     self.chk_vignette.setChecked(preset <= FFXIVPreset.HighLaptop)
     self.grp_movement_self.button(0).setChecked(True)
     self.cb_glare_effect.setCurrentIndex(0)
+    self.cb_water_refraction.setCurrentIndex(0)
 
     if preset <= FFXIVPreset.HighDesktop:
       self.cb_reflections.setCurrentIndex(0)
@@ -638,7 +649,8 @@ class FFXIVBenchmarkLauncher(QApplication):
       "SYS.DepthOfField_DX11=" + str(int(self.chk_depth_of_field.isChecked())),
       "SYS.ParallaxOcclusion_DX11=" + str(1 - self.cb_parallax_occlusion.currentIndex()),
       "SYS.Tessellation_DX11=" + str(1 - self.cb_tessellation.currentIndex()),
-      "SYS.GlareRepresentation_DX11=" + str(1 - self.cb_glare.currentIndex()) ]
+      "SYS.GlareRepresentation_DX11=" + str(1 - self.cb_glare.currentIndex()),
+      "SYS.DistortionWater_DX11=" + str(2 - self.cb_water_refraction.currentIndex()) ]
 
     return cmd_args
 
