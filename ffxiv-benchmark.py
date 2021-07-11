@@ -477,6 +477,7 @@ class FFXIVBenchmarkLauncher(QApplication):
     self.chk_fxaa.setChecked(preset <= FFXIVPreset.HighLaptop)
     self.chk_shadow_npc.setChecked(preset <= FFXIVPreset.HighLaptop)
     self.chk_vignette.setChecked(preset <= FFXIVPreset.HighLaptop)
+    self.chk_depth_of_field.setChecked(True)
     self.grp_movement_self.button(0).setChecked(True)
     self.cb_glare_effect.setCurrentIndex(0)
     self.cb_water_refraction.setCurrentIndex(0)
