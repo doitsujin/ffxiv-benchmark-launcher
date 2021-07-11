@@ -7,6 +7,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 
 import subprocess
+import copy
 import sys
 import os
 
@@ -39,7 +40,7 @@ class FFXIVBenchmarkConfig:
     self.cfg['wine'] = {
       "path"                  : wine_path,
       "prefix"                : os.getenv("HOME") + "/.wine",
-      "wined3d_enable"        : "0" }
+      "environment"           : "WINEESYNC=1 WINEFSYNC=1 DXVK_LOG_LEVEL=none DXVK_HUD=fps,gpuload" }
 
     self.cfg['graphics'] = {
       "display_mode"          : "0",
@@ -98,6 +99,7 @@ class FFXIVBenchmarkLauncher(QApplication):
 
     self.text_wine_executable_path = QLineEdit()
     self.text_wine_prefix_path = QLineEdit()
+    self.text_wine_environment = QLineEdit()
 
     self.btn_wine_executable_path = QPushButton("Find")
     self.btn_wine_executable_path.clicked.connect(self.find_wine)
@@ -105,23 +107,15 @@ class FFXIVBenchmarkLauncher(QApplication):
     self.btn_wine_prefix_path = QPushButton("Find")
     self.btn_wine_prefix_path.clicked.connect(self.find_wine_prefix)
 
-    rb_wined3d_default = QRadioButton("Default")
-    rb_wined3d_yes = QRadioButton("WineD3D")
-
-    self.grp_wined3d = QButtonGroup()
-    self.grp_wined3d.addButton(rb_wined3d_default, 0)
-    self.grp_wined3d.addButton(rb_wined3d_yes, 1)
-
     layout_grid_launch_wine = QGridLayout()
     layout_grid_launch_wine.addWidget(QLabel("Executable:"), 0, 0)
-    layout_grid_launch_wine.addWidget(self.text_wine_executable_path, 0, 1, 1, 2)
-    layout_grid_launch_wine.addWidget(self.btn_wine_executable_path, 0, 3)
+    layout_grid_launch_wine.addWidget(self.text_wine_executable_path, 0, 1)
+    layout_grid_launch_wine.addWidget(self.btn_wine_executable_path, 0, 2)
     layout_grid_launch_wine.addWidget(QLabel("Prefix:"), 1, 0)
-    layout_grid_launch_wine.addWidget(self.text_wine_prefix_path, 1, 1, 1, 2)
-    layout_grid_launch_wine.addWidget(self.btn_wine_prefix_path, 1, 3)
-    layout_grid_launch_wine.addWidget(QLabel("D3D11 implementation:"), 2, 0)
-    layout_grid_launch_wine.addWidget(rb_wined3d_default, 2, 1)
-    layout_grid_launch_wine.addWidget(rb_wined3d_yes, 2, 2)
+    layout_grid_launch_wine.addWidget(self.text_wine_prefix_path, 1, 1)
+    layout_grid_launch_wine.addWidget(self.btn_wine_prefix_path, 1, 2)
+    layout_grid_launch_wine.addWidget(QLabel("Environment:"), 2, 0)
+    layout_grid_launch_wine.addWidget(self.text_wine_environment, 2, 1, 1, 2)
 
     group_launch_wine = QGroupBox("Wine")
     group_launch_wine.setLayout(layout_grid_launch_wine)
@@ -399,12 +393,7 @@ class FFXIVBenchmarkLauncher(QApplication):
     self.text_benchmark_directory.setText(cfg.get("benchmark", "path"))
     self.text_wine_executable_path.setText(cfg.get("wine", "path"))
     self.text_wine_prefix_path.setText(cfg.get("wine", "prefix"))
-
-    api_button = self.grp_wined3d.button(cfg.getint("wine", "wined3d_enable"))
-
-    if not api_button is None:
-      api_button.setChecked(True)
-
+    self.text_wine_environment.setText(cfg.get("wine", "environment"))
     self.cb_fullscreen_mode.setCurrentIndex(cfg.getint("graphics", "display_mode"))
     self.text_res_x.setText(str(cfg.getint("graphics", "display_res_x")))
     self.text_res_y.setText(str(cfg.getint("graphics", "display_res_y")))
@@ -445,7 +434,7 @@ class FFXIVBenchmarkLauncher(QApplication):
     cfg.set("benchmark", "path", self.text_benchmark_directory.text())
     cfg.set("wine", "path", self.text_wine_executable_path.text())
     cfg.set("wine", "prefix", self.text_wine_prefix_path.text())
-    cfg.set("wine", "wined3d_enable", str(self.grp_wined3d.checkedId()))
+    cfg.set("wine", "environment", str(self.text_wine_environment.text()))
     cfg.set("graphics", "display_mode", str(self.cb_fullscreen_mode.currentIndex()))
     cfg.set("graphics", "display_res_x", self.text_res_x.text())
     cfg.set("graphics", "display_res_y", self.text_res_y.text())
@@ -593,13 +582,12 @@ class FFXIVBenchmarkLauncher(QApplication):
       if msg.exec() == QMessageBox.No:
         return
 
-    process_env = os.environ
-    process_env["WINEESYNC"] = "1"
-    process_env["WINEFSYNC"] = "1"
-    process_env["WINEDLLOVERRIDES"] = "d3d11,dxgi=n,b"
+    process_env = copy.deepcopy(os.environ)
 
-    if self.grp_wined3d.checkedId() == 1:
-      process_env["WINEDLLOVERRIDES"] = "d3d11,dxgi=b"
+    for e in self.text_wine_environment.text().split():
+      v = e.split("=", 1)
+      if len(v) == 2:
+        process_env[v[0]] = v[1]
 
     cmdline.insert(0, wine_binary_path)
     cmdline.insert(1, benchmark_exe_path)
