@@ -584,6 +584,7 @@ class FFXIVBenchmarkLauncher(QApplication):
         return
 
     process_env = copy.deepcopy(os.environ)
+    process_env["WINEPREFIX"] = wine_prefix_path
 
     for e in self.text_wine_environment.text().split():
       v = e.split("=", 1)
