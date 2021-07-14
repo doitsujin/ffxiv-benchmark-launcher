@@ -120,13 +120,28 @@ class FFXIVBenchmarkLauncher(QApplication):
     group_launch_wine = QGroupBox("Wine")
     group_launch_wine.setLayout(layout_grid_launch_wine)
 
-    layout_vb_launch = QVBoxLayout()
-    layout_vb_launch.addWidget(group_launch_benchmark)
-    layout_vb_launch.addWidget(group_launch_wine)
-    layout_vb_launch.addStretch()
+    self.lbl_score = QLabel()
+    self.lbl_score.setStyleSheet("font-size: 40pt; font-weight: bold")
+    self.lbl_score.setAlignment(Qt.AlignCenter)
+
+    self.lbl_fps = QLabel()
+    self.lbl_fps.setStyleSheet("font-weight: bold")
+    self.lbl_fps.setAlignment(Qt.AlignCenter)
+
+    layout_vb_launch_score = QVBoxLayout()
+    layout_vb_launch_score.addWidget(self.lbl_score)
+    layout_vb_launch_score.addWidget(self.lbl_fps)
+
+    self.group_launch_score = QGroupBox("Score")
+    self.group_launch_score.setLayout(layout_vb_launch_score)
+
+    self.layout_vb_launch = QVBoxLayout()
+    self.layout_vb_launch.addWidget(group_launch_benchmark)
+    self.layout_vb_launch.addWidget(group_launch_wine)
+    self.layout_vb_launch.addStretch()
 
     self.page_launch = QWidget()
-    self.page_launch.setLayout(layout_vb_launch)
+    self.page_launch.setLayout(self.layout_vb_launch)
 
     btn_preset_max = QPushButton("Maximum")
     btn_preset_h_d = QPushButton("High (Desktop)")
@@ -598,6 +613,40 @@ class FFXIVBenchmarkLauncher(QApplication):
 
     if ret.returncode != 0:
       self.show_error(QMessageBox.Warning, "Command execution failed with return code " + str(ret.returncode) + ".")
+      return
+
+    self.update_score()
+
+  def update_score(self):
+    self.layout_vb_launch.removeWidget(self.group_launch_score)
+
+    results = self.get_results()
+
+    if not results is None:
+      (score, fps) = results
+      self.lbl_score.setText(str(score))
+      self.lbl_fps.setText(str(fps) + " fps avg.")
+      self.layout_vb_launch.insertWidget(2, self.group_launch_score)
+
+  def get_results(self):
+    file_path = self.text_benchmark_directory.text() + "/ffxivbenchmarklauncher.ini"
+
+    if not os.path.isfile(file_path):
+      return None
+
+    config = ConfigParser()
+
+    try:
+      config.read(file_path)
+
+      if not config.has_option("SCORE", "SCORE") or not config.has_option("SCORE", "SCORE_FPSAVERAGE"):
+        return None
+
+      return (config.get("SCORE", "SCORE"), config.get("SCORE", "SCORE_FPSAVERAGE"))
+    except:
+      self.show_error(QMessageBox.Warning, "Failed to read " + file_path)
+      return None
+
 
   def build_cmdline(self, vsync):
     texture_filter_type = 2
