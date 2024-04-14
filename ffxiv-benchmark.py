@@ -2,9 +2,9 @@
 
 from configparser import ConfigParser
 
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
+from PyQt6.QtWidgets import *
+from PyQt6.QtCore import *
+from PyQt6.QtGui import *
 
 import subprocess
 import copy
@@ -127,11 +127,11 @@ class FFXIVBenchmarkLauncher(QApplication):
 
     self.lbl_score = QLabel()
     self.lbl_score.setStyleSheet("font-size: 40pt; font-weight: bold")
-    self.lbl_score.setAlignment(Qt.AlignCenter)
+    self.lbl_score.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
     self.lbl_fps = QLabel()
     self.lbl_fps.setStyleSheet("font-weight: bold")
-    self.lbl_fps.setAlignment(Qt.AlignCenter)
+    self.lbl_fps.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
     layout_vb_launch_score = QVBoxLayout()
     layout_vb_launch_score.addWidget(self.lbl_score)
