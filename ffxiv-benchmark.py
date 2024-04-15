@@ -173,6 +173,7 @@ class FFXIVBenchmarkLauncher(QApplication):
     self.cb_fullscreen_mode.addItem("Windowed")
     self.cb_fullscreen_mode.addItem("Fullscreen")
     self.cb_fullscreen_mode.addItem("Borderless")
+    self.cb_fullscreen_mode.currentIndexChanged.connect(self.update_resolution)
 
     layout_grid_display_mode = QGridLayout()
     layout_grid_display_mode.addWidget(QLabel("Mode:"), 0, 0)
@@ -518,6 +519,7 @@ class FFXIVBenchmarkLauncher(QApplication):
       movement_npc_button.setChecked(True)
 
     self.update_slider()
+    self.update_resolution(self.cb_fullscreen_mode.currentIndex())
 
   def saveConfig(self, cfg):
     cfg.set("benchmark", "path", self.text_benchmark_directory.text())
@@ -653,8 +655,16 @@ class FFXIVBenchmarkLauncher(QApplication):
   def update_slider(self):
     self.lbl_scale_value.setText(str(self.sld_scale.value()) + "%")
 
+  def update_resolution(self, index):
+    self.text_res_x.setEnabled(index != 2)
+    self.text_res_y.setEnabled(index != 2)
+
   def find_benchmark(self):
-    path = QFileDialog.getExistingDirectory(self.window, "Select benchmark directory")
+    path = QFileDialog.getExistingDirectory(self.window, "Select benchmark directory",
+      self.text_benchmark_directory.text())
+
+    if path == "":
+      return
 
     if not os.path.isfile(path + "/game/ffxiv_dx11.exe"):
       self.show_error(QMessageBox.Icon.Critical, "Benchmark executable (" + path + "/game/ffxiv_dx11.exe) not found.")
@@ -666,12 +676,18 @@ class FFXIVBenchmarkLauncher(QApplication):
     self.text_benchmark_directory.setText(path)
 
   def find_wine(self):
-    (path, _) = QFileDialog.getOpenFileName(self.window, "Select Wine executable")
-    self.text_wine_executable_path.setText(path)
+    (path, _) = QFileDialog.getOpenFileName(self.window, "Select Wine executable",
+      self.text_wine_executable_path.text())
+
+    if path != "":
+      self.text_wine_executable_path.setText(path)
 
   def find_wine_prefix(self):
-    path = QFileDialog.getExistingDirectory(self.window, "Select Wine prefix")
-    self.text_wine_prefix_path.setText(path)
+    path = QFileDialog.getExistingDirectory(self.window, "Select Wine prefix",
+      self.text_wine_prefix_path.text())
+
+    if path != "":
+      self.text_wine_prefix_path.setText(path)
 
   def launch_benchmark(self):
     self.launch(self.build_cmdline(False))
