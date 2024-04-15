@@ -518,9 +518,6 @@ class FFXIVBenchmarkLauncher(QApplication):
     if not movement_npc_button is None:
       movement_npc_button.setChecked(True)
 
-    self.update_slider()
-    self.update_resolution(self.cb_fullscreen_mode.currentIndex())
-
   def saveConfig(self, cfg):
     cfg.set("benchmark", "path", self.text_benchmark_directory.text())
     cfg.set("wine", "path", self.text_wine_executable_path.text())
@@ -700,6 +697,7 @@ class FFXIVBenchmarkLauncher(QApplication):
   def launch(self, cmdline):
     benchmark_dir = self.text_benchmark_directory.text()
     benchmark_exe_path = benchmark_dir + "/game/ffxiv_dx11.exe"
+
     wine_binary_path = self.text_wine_executable_path.text()
     wine_prefix_path = self.text_wine_prefix_path.text()
 
@@ -720,6 +718,8 @@ class FFXIVBenchmarkLauncher(QApplication):
 
       if msg.exec() == QMessageBox.StandardButton.No:
         return
+
+    self.update_benchmark_config()
 
     process_env = copy.deepcopy(os.environ)
     process_env["WINEPREFIX"] = wine_prefix_path
@@ -751,13 +751,62 @@ class FFXIVBenchmarkLauncher(QApplication):
       self.lbl_fps.setText(str(fps) + " fps avg.")
       self.layout_vb_launch.insertWidget(2, self.group_launch_score)
 
+  def update_benchmark_config(self):
+    file_path = self.get_benchmark_config_file()
+
+    if not os.path.isfile(file_path):
+      return
+
+    config = ConfigParser()
+    config.optionxform=str
+
+    width = self.text_res_x.text()
+    height = self.text_res_y.text()
+
+    if self.cb_fullscreen_mode.currentIndex() == 2:
+      screen = self.window.screen()
+
+      if not screen is None:
+        width = str(screen.geometry().width())
+        height = str(screen.geometry().height())
+
+    try:
+      config.read(file_path)
+
+      # Be ultra-conservative here and don't mess around with the
+      # configuration if we can't find the options we're overwriting.
+      if (not config.has_option("EVN", "LAUNGUAGE") or
+          not config.has_option("EVN", "SPEC_DX11") or
+          not config.has_option("EVN", "SCREENWIDTH_DX11") or
+          not config.has_option("EVN", "SCREENHEIGHT_DX11")):
+        return
+
+      # Yes, they really misspelt 'language'
+      config.set("EVN", "LAUNGUAGE", "1")
+      # Always pretend we're using custom settings, it's annoying
+      # to validate all the settings against the presets
+      config.set("EVN", "SPEC_DX11", "8")
+      # This may or may not be the resolution the benchmark
+      # will actually run at, we can't really know
+      config.set("EVN", "SCREENWIDTH_DX11", width)
+      config.set("EVN", "SCREENHEIGHT_DX11", height)
+
+      with open(file_path, "w+") as f:
+        config.write(f)
+    except:
+      return
+
+  def get_benchmark_config_file(self):
+    return self.text_benchmark_directory.text() + "/ffxivbenchmarklauncher.ini"
+
   def get_results(self):
-    file_path = self.text_benchmark_directory.text() + "/ffxivbenchmarklauncher.ini"
+    file_path = self.get_benchmark_config_file()
 
     if not os.path.isfile(file_path):
       return None
 
     config = ConfigParser()
+    config.optionxform=str
 
     try:
       config.read(file_path)
@@ -769,7 +818,6 @@ class FFXIVBenchmarkLauncher(QApplication):
     except:
       self.show_error(QMessageBox.Icon.Warning, "Failed to read " + file_path)
       return None
-
 
   def build_cmdline(self, vsync):
     texture_filter_type = 2
