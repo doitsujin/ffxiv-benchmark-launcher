@@ -657,11 +657,11 @@ class FFXIVBenchmarkLauncher(QApplication):
     path = QFileDialog.getExistingDirectory(self.window, "Select benchmark directory")
 
     if not os.path.isfile(path + "/game/ffxiv_dx11.exe"):
-      self.show_error(QMessageBox.Critical, "Benchmark executable (" + path + "/game/ffxiv_dx11.exe) not found.")
+      self.show_error(QMessageBox.Icon.Critical, "Benchmark executable (" + path + "/game/ffxiv_dx11.exe) not found.")
       return
 
     if not os.path.isdir(path + "/game/sqpack/ex5"):
-      self.show_error(QMessageBox.Warning, "Unsupported version of the FFXIV benchmark detected. Graphics options will not work as expected.")
+      self.show_error(QMessageBox.Icon.Warning, "Unsupported version of the FFXIV benchmark detected. Graphics options will not work as expected.")
 
     self.text_benchmark_directory.setText(path)
 
@@ -688,21 +688,21 @@ class FFXIVBenchmarkLauncher(QApplication):
     wine_prefix_path = self.text_wine_prefix_path.text()
 
     if not os.path.isfile(benchmark_exe_path):
-      self.show_error(QMessageBox.Critical, "Benchmark executable (" + benchmark_exe_path + ") not found.")
+      self.show_error(QMessageBox.Icon.Critical, "Benchmark executable (" + benchmark_exe_path + ") not found.")
       return
 
     if not os.path.isfile(wine_binary_path):
-      self.show_error(QMessageBox.Critical, "Wine executable (" + wine_binary_path + ") not found.")
+      self.show_error(QMessageBox.Icon.Critical, "Wine executable (" + wine_binary_path + ") not found.")
       return
 
     if not os.path.isdir(wine_prefix_path):
       msg = QMessageBox()
-      msg.setIcon(QMessageBox.Question)
+      msg.setIcon(QMessageBox.Icon.Question)
       msg.setText("The given wine prefix does not exist. Continue anyway?")
       msg.setWindowTitle("Warning")
-      msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+      msg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
 
-      if msg.exec() == QMessageBox.No:
+      if msg.exec() == QMessageBox.StandardButton.No:
         return
 
     process_env = copy.deepcopy(os.environ)
@@ -719,7 +719,7 @@ class FFXIVBenchmarkLauncher(QApplication):
     ret = subprocess.run(cmdline, env=process_env, cwd=benchmark_dir)
 
     if ret.returncode != 0:
-      self.show_error(QMessageBox.Warning, "Command execution failed with return code " + str(ret.returncode) + ".")
+      self.show_error(QMessageBox.Icon.Warning, "Command execution failed with return code " + str(ret.returncode) + ".")
       return
 
     self.update_score()
@@ -751,7 +751,7 @@ class FFXIVBenchmarkLauncher(QApplication):
 
       return (config.get("SCORE", "SCORE"), config.get("SCORE", "SCORE_FPSAVERAGE"))
     except:
-      self.show_error(QMessageBox.Warning, "Failed to read " + file_path)
+      self.show_error(QMessageBox.Icon.Warning, "Failed to read " + file_path)
       return None
 
 
@@ -818,7 +818,7 @@ class FFXIVBenchmarkLauncher(QApplication):
     msg.setIcon(button)
     msg.setText(message)
     msg.setWindowTitle("Error")
-    msg.setStandardButtons(QMessageBox.Ok)
+    msg.setStandardButtons(QMessageBox.StandardButton.Ok)
     msg.exec()
 
   def on_quit(self):
