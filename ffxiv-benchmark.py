@@ -199,6 +199,7 @@ class FFXIVBenchmarkLauncher(QApplication):
     self.sld_scale = QSlider()
     self.sld_scale.setMinimum(50)
     self.sld_scale.setMaximum(100)
+    self.sld_scale.setValue(100)
     self.sld_scale.setOrientation(Qt.Orientation.Horizontal)
     self.sld_scale.setTracking(True)
     self.sld_scale.valueChanged.connect(self.update_slider)
