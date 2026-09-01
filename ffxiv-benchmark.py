@@ -7,6 +7,7 @@ from PyQt6.QtCore import *
 from PyQt6.QtGui import *
 
 import subprocess
+import threading
 import copy
 import sys
 import os
@@ -473,6 +474,12 @@ class FFXIVBenchmarkLauncher(QApplication):
     self.applyConfig(self.config.cfg)
     self.aboutToQuit.connect(self.on_quit)
 
+    self.tm_status = QTimer(self)
+    self.tm_status.timeout.connect(self.update_status)
+
+    self.game_thread = None
+    self.ret = None
+
   def applyConfig(self, cfg):
     self.text_benchmark_directory.setText(cfg.get("benchmark", "path"))
     self.text_wine_executable_path.setText(cfg.get("wine", "path"))
@@ -733,10 +740,47 @@ class FFXIVBenchmarkLauncher(QApplication):
     cmdline.insert(0, wine_binary_path)
     cmdline.insert(1, benchmark_exe_path)
 
-    ret = subprocess.run(cmdline, env=process_env, cwd=benchmark_dir)
+    self.ret = None
 
-    if ret.returncode != 0:
-      self.show_error(QMessageBox.Icon.Warning, "Command execution failed with return code " + str(ret.returncode) + ".")
+    if not self.game_thread is None:
+      self.show_error(QMessageBox.Icon.Warning, "Game is still running.")
+      return
+
+    self.game_thread = threading.Thread(target=self.run_app, args=([cmdline],[process_env],benchmark_dir))
+    self.game_thread.start()
+
+    self.btn_launch_benchmark.setEnabled(False)
+    self.btn_launch_char_creation.setEnabled(False)
+
+    self.tm_status.start(1000)
+
+  def run_app(self, cmdline, process_env, benchmark_dir):
+    self.ret = subprocess.run(cmdline[0], env=process_env[0], cwd=benchmark_dir)
+
+  def update_status(self):
+    is_alive = False
+
+    if not self.game_thread is None:
+      is_alive = self.game_thread.is_alive()
+
+    if is_alive:
+      return
+
+    self.game_thread.join()
+    self.game_thread = None
+
+    self.tm_status.stop()
+
+    self.btn_launch_benchmark.setEnabled(True)
+    self.btn_launch_char_creation.setEnabled(True)
+
+    if self.ret is None or self.ret.returncode != 0:
+      return_code = "None"
+
+      if not self.ret is None:
+        return_code = str(self.ret.returncode);
+
+      self.show_error(QMessageBox.Icon.Warning, "Command execution failed with return code " + return_code + ".")
       return
 
     self.update_score()
